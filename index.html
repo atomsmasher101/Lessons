@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lessons Directory</title>
+  <style>
+    :root {
+      --bg-1: #f8fafc;
+      --bg-2: #eef2ff;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #4f46e5;
+      --accent-2: #7c3aed;
+      --border: #e2e8f0;
+      --shadow: 0 16px 40px rgba(79, 70, 229, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, var(--bg-2), var(--bg-1) 45%);
+      padding: 32px 20px;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #312e81, #4f46e5 45%, #7c3aed);
+      color: #fff;
+      border-radius: 16px;
+      padding: 30px 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 4vw, 2.3rem);
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      flex-shrink: 0;
+    }
+
+    ul {
+      list-style: none;
+      margin: 14px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    li {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 13px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    li:hover {
+      transform: translateY(-1px);
+      border-color: #c7d2fe;
+      box-shadow: 0 8px 16px rgba(79, 70, 229, 0.08);
+    }
+
+    a {
+      color: #3730a3;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 20px 14px; }
+      .hero { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1>Class & Teaching Guide Directory</h1>
+      <p>Browse lesson and teaching guides in one place.</p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Class Guides</h2>
+        <ul id="class-guides">
+          <li>Loading class guides...</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Teaching Guides</h2>
+        <ul id="teaching-guides">
+          <li>Loading teaching guides...</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const GITHUB_OWNER = 'atomsmasher101';
+    const GITHUB_REPO = 'Lessons';
+    const GITHUB_BRANCH = 'main';
+
+    function githubContentsApiUrl(path) {
+      const encodedPath = path ? encodeURIComponent(path).replace(/%2F/g, '/') : '';
+      return `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`;
+    }
+
+    function githubRawUrl(path) {
+      return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
+    }
+
+    function siteRelativePath(folder, filename) {
+      if (!folder) {
+        return `./${filename}`;
+      }
+      return `./${folder}/${filename}`;
+    }
+
+    async function fetchGuideFiles(folder) {
+      const response = await fetch(githubContentsApiUrl(folder));
+      if (!response.ok) {
+        throw new Error(`Could not read repository directory "${folder || '/'}"`);
+      }
+
+      const entries = await response.json();
+      return entries
+        .filter((entry) => entry.type === 'file' && entry.name.endsWith('.html'))
+        .filter((entry) => !(folder === '' && entry.name === 'index.html'))
+        .map((entry) => ({
+          rawPath: folder ? `${folder}/${entry.name}` : entry.name,
+          sitePath: siteRelativePath(folder, entry.name)
+        }));
+    }
+
+    async function loadGuideMetadata(guide) {
+      const response = await fetch(githubRawUrl(guide.rawPath));
+      if (!response.ok) {
+        throw new Error(`Failed to open ${guide.rawPath}`);
+      }
+
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const guideName = doc.querySelector('meta[name="guidename"]')?.content || guide.sitePath;
+      const lessonDate = doc.querySelector('meta[name="lessondate"]')?.content || 'Unknown date';
+
+      return {
+        filePath: guide.sitePath,
+        guideName,
+        lessonDate
+      };
+    }
+
+    function renderGuideList(targetId, guides) {
+      const list = document.getElementById(targetId);
+      list.innerHTML = '';
+
+      if (!guides.length) {
+        list.innerHTML = '<li>No guides found.</li>';
+        return;
+      }
+
+      guides
+        .sort((a, b) => (b.lessonDate || '').localeCompare(a.lessonDate || ''))
+        .forEach(({ filePath, guideName, lessonDate }) => {
+          const item = document.createElement('li');
+          item.innerHTML = `
+            <a href="${filePath}">${guideName}</a>
+            <div class="meta">Lesson date: ${lessonDate}</div>
+          `;
+          list.appendChild(item);
+        });
+    }
+
+    async function populateSection({ listId, folder }) {
+      try {
+        const files = await fetchGuideFiles(folder);
+        const metadata = await Promise.all(files.map(loadGuideMetadata));
+        renderGuideList(listId, metadata);
+      } catch (error) {
+        const list = document.getElementById(listId);
+        list.innerHTML = `<li>Unable to load guides. ${error.message}</li>`;
+      }
+    }
+
+    populateSection({ listId: 'class-guides', folder: '' });
+    populateSection({ listId: 'teaching-guides', folder: 'guides' });
+  </script>
+</body>
+</html>
