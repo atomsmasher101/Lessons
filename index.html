@@ -18,9 +18,7 @@
       --shadow: 0 16px 40px rgba(79, 70, 229, 0.08);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -162,41 +160,58 @@
   </main>
 
   <script>
-    async function fetchDirectoryLinks(pathPrefix) {
-      const response = await fetch(pathPrefix);
-      if (!response.ok) {
-        throw new Error(`Could not read directory listing for ${pathPrefix}`);
-      }
+    const GITHUB_OWNER = 'atomsmasher101';
+    const GITHUB_REPO = 'Lessons';
+    const GITHUB_BRANCH = 'main';
 
-      const listingHtml = await response.text();
-      const doc = new DOMParser().parseFromString(listingHtml, 'text/html');
-      const links = [...doc.querySelectorAll('a[href]')]
-        .map((anchor) => anchor.getAttribute('href'))
-        .filter((href) => href && href.endsWith('.html'));
-
-      if (pathPrefix === './') {
-        return links
-          .filter((href) => !href.includes('/') && href !== 'index.html')
-          .map((href) => `./${href}`);
-      }
-
-      return links
-        .filter((href) => !href.startsWith('..'))
-        .map((href) => href.startsWith(pathPrefix) ? href : `${pathPrefix}${href}`);
+    function githubContentsApiUrl(path) {
+      const encodedPath = path ? encodeURIComponent(path).replace(/%2F/g, '/') : '';
+      return `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`;
     }
 
-    async function loadGuideMetadata(filePath) {
-      const response = await fetch(filePath);
+    function githubRawUrl(path) {
+      return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
+    }
+
+    function siteRelativePath(folder, filename) {
+      if (!folder) {
+        return `./${filename}`;
+      }
+      return `./${folder}/${filename}`;
+    }
+
+    async function fetchGuideFiles(folder) {
+      const response = await fetch(githubContentsApiUrl(folder));
       if (!response.ok) {
-        throw new Error(`Failed to open ${filePath}`);
+        throw new Error(`Could not read repository directory "${folder || '/'}"`);
+      }
+
+      const entries = await response.json();
+      return entries
+        .filter((entry) => entry.type === 'file' && entry.name.endsWith('.html'))
+        .filter((entry) => !(folder === '' && entry.name === 'index.html'))
+        .map((entry) => ({
+          rawPath: folder ? `${folder}/${entry.name}` : entry.name,
+          sitePath: siteRelativePath(folder, entry.name)
+        }));
+    }
+
+    async function loadGuideMetadata(guide) {
+      const response = await fetch(githubRawUrl(guide.rawPath));
+      if (!response.ok) {
+        throw new Error(`Failed to open ${guide.rawPath}`);
       }
 
       const html = await response.text();
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const guideName = doc.querySelector('meta[name="guidename"]')?.content || filePath;
+      const guideName = doc.querySelector('meta[name="guidename"]')?.content || guide.sitePath;
       const lessonDate = doc.querySelector('meta[name="lessondate"]')?.content || 'Unknown date';
 
-      return { filePath, guideName, lessonDate };
+      return {
+        filePath: guide.sitePath,
+        guideName,
+        lessonDate
+      };
     }
 
     function renderGuideList(targetId, guides) {
@@ -222,17 +237,17 @@
 
     async function populateSection({ listId, folder }) {
       try {
-        const files = await fetchDirectoryLinks(folder);
+        const files = await fetchGuideFiles(folder);
         const metadata = await Promise.all(files.map(loadGuideMetadata));
         renderGuideList(listId, metadata);
       } catch (error) {
         const list = document.getElementById(listId);
-        list.innerHTML = `<li>Unable to load guides automatically. ${error.message}</li>`;
+        list.innerHTML = `<li>Unable to load guides. ${error.message}</li>`;
       }
     }
 
-    populateSection({ listId: 'class-guides', folder: './' });
-    populateSection({ listId: 'teaching-guides', folder: 'guides/' });
+    populateSection({ listId: 'class-guides', folder: '' });
+    populateSection({ listId: 'teaching-guides', folder: 'guides' });
   </script>
 </body>
 </html>
