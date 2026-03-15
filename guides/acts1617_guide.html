@@ -113,6 +113,7 @@
             z-index: 10;
             box-shadow: 0 0 15px #e74c3c;
             transform: translate(-50%, -50%);
+            aspect-ratio: 1;
         }
 
         /* Go Back Button */
@@ -390,7 +391,7 @@
         highlight.style.left = coords.x + '%';
         highlight.style.top = coords.y + '%';
         highlight.style.width = coords.r + '%';
-        highlight.style.height = coords.r + '%';
+        highlight.style.height = 'auto';
         highlight.style.display = 'block';
         highlight.style.animation = 'none';
         highlight.offsetHeight;
