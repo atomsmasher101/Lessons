@@ -112,8 +112,6 @@
             display: none;
             z-index: 10;
             box-shadow: 0 0 15px #e74c3c;
-            width: 40px;
-            height: 40px;
             transform: translate(-50%, -50%);
         }
 
@@ -361,21 +359,21 @@
     var savedElement = null;
 
     const cityCoords = {
-        'derbe': { x: 68.9, y: 42.5, r: 40 },
-        'lystra': { x: 62.0, y: 39.3, r: 40 },
-        'iconium': { x: 62.2, y: 36.9, r: 40 },
-        'mysia': { x: 34.7, y: 18.0, r: 40 },
-        'bithynia': { x: 55.8, y: 9.8, r: 135 },
-        'macedonia': { x: 6.9, y: 8.4, r: 253 },
-        'samothrace': { x: 23.5, y: 12.5, r: 40 },
-        'neapolis': { x: 17.1, y: 7.8, r: 40 },
-        'amphipolis': { x: 13.6, y: 9.2, r: 40 },
-        'apollonia': { x: 10.9, y: 10.9, r: 40 },
-        'troas': { x: 28.3, y: 16.4, r: 40 },
-        'philippi': { x: 15.3, y: 7.8, r: 40 },
-        'thessalonica': { x: 7.8, y: 10.0, r: 40 },
-        'berea': { x: 3.9, y: 12.0, r: 40 },
-        'athens': { x: 12.2, y: 32.8, r: 40 }
+        'derbe': { x: 68.9, y: 42.5, r: 2.22 },
+        'lystra': { x: 62.0, y: 39.3, r: 2.22 },
+        'iconium': { x: 62.2, y: 36.9, r: 2.22 },
+        'mysia': { x: 34.7, y: 18.0, r: 2.22 },
+        'bithynia': { x: 55.8, y: 9.8, r: 7.5 },
+        'macedonia': { x: 6.9, y: 8.4, r: 14.06 },
+        'samothrace': { x: 23.5, y: 12.5, r: 2.22 },
+        'neapolis': { x: 17.1, y: 7.8, r: 2.22 },
+        'amphipolis': { x: 13.6, y: 9.2, r: 2.22 },
+        'apollonia': { x: 10.9, y: 10.9, r: 2.22 },
+        'troas': { x: 28.3, y: 16.4, r: 2.22 },
+        'philippi': { x: 15.3, y: 7.8, r: 2.22 },
+        'thessalonica': { x: 7.8, y: 10.0, r: 2.22 },
+        'berea': { x: 3.9, y: 12.0, r: 2.22 },
+        'athens': { x: 12.2, y: 32.8, r: 2.22 }
     };
 
     function highlightCity(city, el) {
@@ -391,8 +389,8 @@
 
         highlight.style.left = coords.x + '%';
         highlight.style.top = coords.y + '%';
-        highlight.style.width = coords.r + 'px';
-        highlight.style.height = coords.r + 'px';
+        highlight.style.width = coords.r + '%';
+        highlight.style.height = coords.r + '%';
         highlight.style.display = 'block';
         highlight.style.animation = 'none';
         highlight.offsetHeight;
